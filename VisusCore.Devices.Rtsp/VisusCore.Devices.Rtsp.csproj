@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+    <DefaultItemExcludes>$(DefaultItemExcludes);.git*;node_modules\**</DefaultItemExcludes>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Lombiq.HelpfulLibraries.OrchardCore" Version="6.0.0" />
+    <PackageReference Include="OrchardCore.ContentFields" Version="1.6.0" />
+    <PackageReference Include="OrchardCore.Lists" Version="1.6.0" />
+    <PackageReference Include="OrchardCore.Module.Targets" Version="1.6.0" />
+    <PackageReference Include="System.Linq.Async" Version="6.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="wwwroot\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Libraries\VisusCore.AidStack\VisusCore.AidStack\VisusCore.AidStack.csproj" />
+    <ProjectReference Include="..\..\VisusCore.Consumer\VisusCore.Consumer\VisusCore.Consumer.csproj" />
+    <ProjectReference Include="..\..\VisusCore.Devices\VisusCore.Devices\VisusCore.Devices.csproj" />
+    <ProjectReference Include="..\..\VisusCore.Ffmpeg\VisusCore.Ffmpeg\VisusCore.Ffmpeg.csproj" />
+    <ProjectReference Include="..\..\VisusCore.Storage\VisusCore.Storage\VisusCore.Storage.csproj" />
+    <ProjectReference Include="..\..\VisusCore.TenantHostedService\VisusCore.TenantHostedService\VisusCore.TenantHostedService.csproj" />
+    <ProjectReference Include="..\VisusCore.Devices.Rtsp.Abstractions\VisusCore.Devices.Rtsp.Abstractions.csproj" />
+    <ProjectReference Include="..\VisusCore.Devices.Rtsp.Core\VisusCore.Devices.Rtsp.Core.csproj" />
+  </ItemGroup>
+
+</Project>

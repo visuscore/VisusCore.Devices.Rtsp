@@ -1,0 +1,47 @@
+@model RtspDeviceStreamEditViewModel
+
+@using VisusCore.Devices.Rtsp.Core.Models
+@using VisusCore.Devices.Rtsp.ViewModels
+
+@{
+    var selectOptions = Enum.GetValues<EStreamType>()
+        .Select(streamType => new SelectListItem
+        {
+            Text = T[streamType.ToString()].Value,
+            Value = streamType.ToString(),
+            Selected = Model.Type == streamType,
+        })
+        .ToList();
+}
+
+<div class="form-check">
+    <input type="checkbox" class="form-check-input" asp-for="Enabled">
+    @Html.LabelFor(model => model.Enabled, T["Enabled"].Value)
+    <span class="hint d-block">@T["Enable this stream."]</span>
+</div>
+<fieldset class="form-group" asp-validation-class-for="Type">
+    @Html.LabelFor(model => model.Type, T["Type"].Value)
+    @Html.DropDownListFor(model => model.Type, selectOptions, new { @class = "form-control" })
+</fieldset>
+<fieldset class="form-group" asp-validation-class-for="Port">
+    @Html.LabelFor(model => model.Port, T["RTSP Port"].Value)
+    @Html.TextBoxFor(model => model.Port, new { @class = "form-control", @autocomplete="off" })
+    @Html.ValidationMessageFor(model => model.Port, string.Empty, new { @class = "text-danger" })
+    <span class="hint">@T["RTSP port. Example: 554"]</span>
+</fieldset>
+<div class="form-check">
+    <input type="checkbox" class="form-check-input" asp-for="PreferTcp">
+    @Html.LabelFor(model => model.PreferTcp, T["Prefer TCP"].Value)
+    <span class="hint d-block">@T["Use RTSP over TCP where possible."]</span>
+</div>
+<fieldset class="form-group" asp-validation-class-for="Path">
+    @Html.LabelFor(model => model.Path, T["Path"].Value)
+    @Html.TextBoxFor(model => model.Path, new { @class = "form-control", @autocomplete="off" })
+    @Html.ValidationMessageFor(model => model.Path, string.Empty, new { @class = "text-danger" })
+    <span class="hint">@T["Stream relative URL. Example: /live.sdp"]</span>
+</fieldset>
+<div class="form-check">
+    <input type="checkbox" class="form-check-input" asp-for="AllowAudio">
+    @Html.LabelFor(model => model.AllowAudio, T["Enable audio"].Value)
+    <span class="hint d-block">@T["Enable audio."]</span>
+</div>
