@@ -20,6 +20,7 @@ public class RtspDeviceStreamMigrations : DataMigration
             .DisplayedAs("RTSP Device Stream")
             .WithPart(nameof(TitlePart))
             .WithPart(nameof(RtspDeviceStreamPart))
+            .WithPart(nameof(StreamStorageProviderPart))
             .WithPart(nameof(StreamStorageModePart))
             .WithPart(nameof(StreamStorageSizeLimitPart))
             .WithPart(nameof(StreamStorageTimeLimitPart)));

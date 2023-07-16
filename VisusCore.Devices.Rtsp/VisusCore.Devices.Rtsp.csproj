@@ -26,6 +26,7 @@
     <ProjectReference Include="..\..\..\Libraries\VisusCore.AidStack\VisusCore.AidStack\VisusCore.AidStack.csproj" />
     <ProjectReference Include="..\..\VisusCore.Consumer\VisusCore.Consumer\VisusCore.Consumer.csproj" />
     <ProjectReference Include="..\..\VisusCore.Devices\VisusCore.Devices\VisusCore.Devices.csproj" />
+    <ProjectReference Include="..\..\VisusCore.EventBus\VisusCore.EventBus\VisusCore.EventBus.csproj" />
     <ProjectReference Include="..\..\VisusCore.Ffmpeg\VisusCore.Ffmpeg\VisusCore.Ffmpeg.csproj" />
     <ProjectReference Include="..\..\VisusCore.Storage\VisusCore.Storage\VisusCore.Storage.csproj" />
     <ProjectReference Include="..\..\VisusCore.TenantHostedService\VisusCore.TenantHostedService\VisusCore.TenantHostedService.csproj" />

@@ -1,20 +1,19 @@
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Logging;
 using OrchardCore.ContentManagement;
-using OrchardCore.ContentManagement.Handlers;
 using OrchardCore.Lists.Indexes;
-using OrchardCore.Lists.Models;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reactive.Linq;
+using System.Reactive.Subjects;
 using System.Threading;
-using System.Threading.Channels;
 using System.Threading.Tasks;
 using VisusCore.Consumer.Abstractions.Services;
 using VisusCore.Devices.Core.Models;
-using VisusCore.Devices.Models;
 using VisusCore.Devices.Rtsp.Abstractions.Services;
+using VisusCore.Devices.Rtsp.Core.Events;
 using VisusCore.Devices.Rtsp.Core.Models;
 using VisusCore.Devices.Rtsp.Models;
 using VisusCore.TenantHostedService.Core.Services;
@@ -28,11 +27,13 @@ public sealed class RtspConnectionManager : TenantBackgroundScopedService, IRtsp
     private readonly IVideoStreamSegmentConsumerService _videoStreamSegmentConsumerService;
     private readonly ISession _session;
     private readonly IDataProtectionProvider _dataProtectionProvider;
+    private readonly RtspDeviceConfigurationChangeListener _rtspDeviceConfigurationChangeListener;
+    private readonly RtspDeviceStreamConfigurationChangeListener _rtspDeviceStreamConfigurationChangeListener;
     private readonly ILogger _logger;
     private readonly ILoggerFactory _loggerFactory;
     private readonly ConcurrentDictionary<RtspStreamProducer, Task> _streamProducerTasks = new();
-    private readonly Channel<ContentContextBase> _updateItemChannel = Channel.CreateUnbounded<ContentContextBase>();
     private CancellationToken _stoppingToken;
+    private TaskCompletionSource _producerAddedSource = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private bool _disposed;
     private bool _disposedAsync;
 
@@ -40,12 +41,16 @@ public sealed class RtspConnectionManager : TenantBackgroundScopedService, IRtsp
         IVideoStreamSegmentConsumerService videoStreamSegmentConsumerService,
         ISession session,
         IDataProtectionProvider dataProtectionProvider,
+        RtspDeviceConfigurationChangeListener rtspDeviceConfigurationChangeListener,
+        RtspDeviceStreamConfigurationChangeListener rtspDeviceStreamConfigurationChangeListener,
         ILogger<RtspConnectionManager> logger,
         ILoggerFactory loggerFactory)
     {
         _videoStreamSegmentConsumerService = videoStreamSegmentConsumerService;
         _session = session;
         _dataProtectionProvider = dataProtectionProvider;
+        _rtspDeviceConfigurationChangeListener = rtspDeviceConfigurationChangeListener;
+        _rtspDeviceStreamConfigurationChangeListener = rtspDeviceStreamConfigurationChangeListener;
         _logger = logger;
         _loggerFactory = loggerFactory;
     }
@@ -53,7 +58,33 @@ public sealed class RtspConnectionManager : TenantBackgroundScopedService, IRtsp
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _stoppingToken = stoppingToken;
+        using var stoppingSubject = new Subject<bool>();
+        using var stoppingRegistration = _stoppingToken.Register(() => stoppingSubject.OnNext(value: true));
         var deviceSettings = await GetDevicesAsync(stoppingToken);
+        await using var devicePublishedRegistration = await _rtspDeviceConfigurationChangeListener.RtspDevicePublished
+            .TakeUntil(stoppingSubject.AsObservable().ToAsyncObservable())
+            .SubscribeAsync(async deviceEvent => await UpdateItemAsync(deviceEvent));
+        await using var deviceRemovedRegistration = await _rtspDeviceConfigurationChangeListener.RtspDeviceRemoved
+            .TakeUntil(stoppingSubject.AsObservable().ToAsyncObservable())
+            .SubscribeAsync(async deviceEvent => await UpdateItemAsync(deviceEvent));
+        await using var deviceUnpublishedRegistration = await _rtspDeviceConfigurationChangeListener.RtspDeviceUnpublished
+            .TakeUntil(stoppingSubject.AsObservable().ToAsyncObservable())
+            .SubscribeAsync(async deviceEvent => await UpdateItemAsync(deviceEvent));
+        await using var deviceUpdatedRegistration = await _rtspDeviceConfigurationChangeListener.RtspDeviceUpdated
+            .TakeUntil(stoppingSubject.AsObservable().ToAsyncObservable())
+            .SubscribeAsync(async deviceEvent => await UpdateItemAsync(deviceEvent));
+        await using var deviceStreamPublishedRegistration = await _rtspDeviceStreamConfigurationChangeListener.RtspDeviceStreamPublishet
+            .TakeUntil(stoppingSubject.AsObservable().ToAsyncObservable())
+            .SubscribeAsync(async deviceEvent => await UpdateItemAsync(deviceEvent));
+        await using var deviceStreamRemovedRegistration = await _rtspDeviceStreamConfigurationChangeListener.RtspDeviceStreamRemoved
+            .TakeUntil(stoppingSubject.AsObservable().ToAsyncObservable())
+            .SubscribeAsync(async deviceEvent => await UpdateItemAsync(deviceEvent));
+        await using var deviceStreamUnpublishedRegistration = await _rtspDeviceStreamConfigurationChangeListener.RtspDeviceStreamUnpublished
+            .TakeUntil(stoppingSubject.AsObservable().ToAsyncObservable())
+            .SubscribeAsync(async deviceEvent => await UpdateItemAsync(deviceEvent));
+        await using var deviceStreamUpdatedRegistration = await _rtspDeviceStreamConfigurationChangeListener.RtspDeviceStreamUpdated
+            .TakeUntil(stoppingSubject.AsObservable().ToAsyncObservable())
+            .SubscribeAsync(async deviceEvent => await UpdateItemAsync(deviceEvent));
 
         deviceSettings
             .SelectMany(deviceSetting =>
@@ -64,7 +95,12 @@ public sealed class RtspConnectionManager : TenantBackgroundScopedService, IRtsp
         {
             try
             {
-                await UpdateItemAsync(await _updateItemChannel.Reader.ReadAsync(stoppingToken));
+                await Task.WhenAny(
+                    new[]
+                    {
+                        _producerAddedSource.Task,
+                    }
+                    .Concat(_streamProducerTasks.Values.Where(producerTask => !producerTask.IsCompleted)));
             }
             catch (OperationCanceledException)
             {
@@ -74,12 +110,16 @@ public sealed class RtspConnectionManager : TenantBackgroundScopedService, IRtsp
             {
                 _logger.LogError(exception, "Failed to read update channel.");
             }
+
+            if (_producerAddedSource.Task.IsCompleted)
+            {
+                Interlocked.Exchange(
+                    ref _producerAddedSource,
+                    new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously));
+            }
         }
         while (!stoppingToken.IsCancellationRequested);
     }
-
-    internal async Task PostChangeNotificationAsync(ContentContextBase context) =>
-        await _updateItemChannel.Writer.WriteAsync(context, _stoppingToken);
 
     private async Task<IEnumerable<RtspDevice>> GetDevicesAsync(CancellationToken cancellationToken = default) =>
         await (await _session.QueryIndex<RtspDevicePartIndex>()
@@ -252,7 +292,11 @@ public sealed class RtspConnectionManager : TenantBackgroundScopedService, IRtsp
                 "Failed to add RTSP stream producer for device '{DeviceId}' and stream '{StreamId}'.",
                 producer.Device.Id,
                 producer.Stream.Id);
+
+            return;
         }
+
+        _producerAddedSource.TrySetResult();
     }
 
     private async Task RemoveProducerAsync(RtspStreamProducer producer)
@@ -291,6 +335,8 @@ public sealed class RtspConnectionManager : TenantBackgroundScopedService, IRtsp
         var newRtspDeviceStream = newRtspDevice?.Streams.FirstOrDefault(stream => stream.Id == producer.Stream.Id);
         if (newRtspDevice is null || newRtspDeviceStream is null)
         {
+            await producer.StopAsync();
+
             return;
         }
 
@@ -340,19 +386,13 @@ public sealed class RtspConnectionManager : TenantBackgroundScopedService, IRtsp
         }
     }
 
-    private async Task UpdateItemAsync(ContentContextBase context)
+    private async Task UpdateItemAsync(RtspDeviceEvent deviceEvent)
     {
-        if (!context.ContentItem.Has<DevicePart>()
-            && !context.ContentItem.Has<RtspDevicePart>()
-            && !context.ContentItem.Has<RtspDeviceStreamPart>())
-        {
-            return;
-        }
-
-        var removed = context is RemoveContentContext;
-        var streamProducers = _streamProducerTasks.Keys.Where(producer =>
-            producer.Device.Id == context.ContentItem.ContentItemId
-            || producer.Stream.Id == context.ContentItem.ContentItemId)
+        var removed = deviceEvent is RtspDeviceRemovedEvent or RtspDeviceStreamRemovedEvent;
+        var streamEvent = deviceEvent as RtspDeviceStreamEvent;
+        var streamProducers = (streamEvent is not null
+            ? _streamProducerTasks.Keys.Where(producer => producer.Stream.Id == streamEvent.StreamId)
+            : _streamProducerTasks.Keys.Where(producer => producer.Device.Id == deviceEvent.DeviceId))
             .ToList();
 
         if (removed && streamProducers.Any())
@@ -376,11 +416,9 @@ public sealed class RtspConnectionManager : TenantBackgroundScopedService, IRtsp
         }
 
         var streamProducer = streamProducers.FirstOrDefault();
-        if (streamProducer is null
-            && context.ContentItem.As<RtspDeviceStreamPart>() is { } rtspDeviceStreamPart
-            && context.ContentItem.As<ContainedPart>() is { } containedPart)
+        if (streamProducer is null && streamEvent is not null)
         {
-            await TryAddProducerByIdsAsync(containedPart.ListContentItemId, rtspDeviceStreamPart.ContentItem.ContentItemId);
+            await TryAddProducerByIdsAsync(streamEvent.DeviceId, streamEvent.StreamId);
         }
     }
 

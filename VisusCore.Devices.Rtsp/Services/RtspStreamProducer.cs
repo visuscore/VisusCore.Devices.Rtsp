@@ -153,7 +153,7 @@ public class RtspStreamProducer : IDisposable, IAsyncDisposable
                     StreamId = Stream.Id,
                     Data = segment.Data,
                     Duration = segment.Duration,
-                    FrameCount = segment.FrameCount,
+                    FrameCount = segment.FrameCount ?? 0,
                     Init = segment.Init,
                     TimestampUtc = segment.TimestampUtc,
                     TimestampProvided = segment.TimestampProvided,
