@@ -61,28 +61,28 @@ public sealed class RtspConnectionManager : TenantBackgroundScopedService, IRtsp
         using var stoppingSubject = new Subject<bool>();
         using var stoppingRegistration = _stoppingToken.Register(() => stoppingSubject.OnNext(value: true));
         var deviceSettings = await GetDevicesAsync(stoppingToken);
-        await using var devicePublishedRegistration = await _rtspDeviceConfigurationChangeListener.RtspDevicePublished
+        await using var devicePublishedSubscription = await _rtspDeviceConfigurationChangeListener.RtspDevicePublished
             .TakeUntil(stoppingSubject.AsObservable().ToAsyncObservable())
             .SubscribeAsync(async deviceEvent => await UpdateItemAsync(deviceEvent));
-        await using var deviceRemovedRegistration = await _rtspDeviceConfigurationChangeListener.RtspDeviceRemoved
+        await using var deviceRemovedSubscription = await _rtspDeviceConfigurationChangeListener.RtspDeviceRemoved
             .TakeUntil(stoppingSubject.AsObservable().ToAsyncObservable())
             .SubscribeAsync(async deviceEvent => await UpdateItemAsync(deviceEvent));
-        await using var deviceUnpublishedRegistration = await _rtspDeviceConfigurationChangeListener.RtspDeviceUnpublished
+        await using var deviceUnpublishedSubscription = await _rtspDeviceConfigurationChangeListener.RtspDeviceUnpublished
             .TakeUntil(stoppingSubject.AsObservable().ToAsyncObservable())
             .SubscribeAsync(async deviceEvent => await UpdateItemAsync(deviceEvent));
-        await using var deviceUpdatedRegistration = await _rtspDeviceConfigurationChangeListener.RtspDeviceUpdated
+        await using var deviceUpdatedSubscription = await _rtspDeviceConfigurationChangeListener.RtspDeviceUpdated
             .TakeUntil(stoppingSubject.AsObservable().ToAsyncObservable())
             .SubscribeAsync(async deviceEvent => await UpdateItemAsync(deviceEvent));
-        await using var deviceStreamPublishedRegistration = await _rtspDeviceStreamConfigurationChangeListener.RtspDeviceStreamPublishet
+        await using var deviceStreamPublishedSubscription = await _rtspDeviceStreamConfigurationChangeListener.RtspDeviceStreamPublishet
             .TakeUntil(stoppingSubject.AsObservable().ToAsyncObservable())
             .SubscribeAsync(async deviceEvent => await UpdateItemAsync(deviceEvent));
-        await using var deviceStreamRemovedRegistration = await _rtspDeviceStreamConfigurationChangeListener.RtspDeviceStreamRemoved
+        await using var deviceStreamRemovedSubscription = await _rtspDeviceStreamConfigurationChangeListener.RtspDeviceStreamRemoved
             .TakeUntil(stoppingSubject.AsObservable().ToAsyncObservable())
             .SubscribeAsync(async deviceEvent => await UpdateItemAsync(deviceEvent));
-        await using var deviceStreamUnpublishedRegistration = await _rtspDeviceStreamConfigurationChangeListener.RtspDeviceStreamUnpublished
+        await using var deviceStreamUnpublishedSubscription = await _rtspDeviceStreamConfigurationChangeListener.RtspDeviceStreamUnpublished
             .TakeUntil(stoppingSubject.AsObservable().ToAsyncObservable())
             .SubscribeAsync(async deviceEvent => await UpdateItemAsync(deviceEvent));
-        await using var deviceStreamUpdatedRegistration = await _rtspDeviceStreamConfigurationChangeListener.RtspDeviceStreamUpdated
+        await using var deviceStreamUpdatedSubscription = await _rtspDeviceStreamConfigurationChangeListener.RtspDeviceStreamUpdated
             .TakeUntil(stoppingSubject.AsObservable().ToAsyncObservable())
             .SubscribeAsync(async deviceEvent => await UpdateItemAsync(deviceEvent));
 
