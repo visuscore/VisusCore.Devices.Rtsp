@@ -5,7 +5,6 @@ namespace VisusCore.Devices.Rtsp.ViewModels;
 
 public class RtspDeviceStreamEditViewModel
 {
-    public bool Enabled { get; set; }
     [Required]
     [Range(1, 65535)]
     public int Port { get; set; }

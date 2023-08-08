@@ -5,6 +5,7 @@ using EventBusFeatureIds = VisusCore.EventBus.Constants.FeatureIds;
 using FfmpegFeatureIds = VisusCore.Ffmpeg.Constants.FeatureIds;
 using StorageFeatureIds = VisusCore.Storage.Constants.FeatureIds;
 using TenantHostedServiceFeatureIds = VisusCore.TenantHostedService.Constants.FeatureIds;
+using VideoStreamConfigurationFeatureIds = VisusCore.Configuration.VideoStream.Constants.FeatureIds;
 
 [assembly: Module(
     Name = "VisusCore Rtsp Devices",
@@ -21,6 +22,7 @@ using TenantHostedServiceFeatureIds = VisusCore.TenantHostedService.Constants.Fe
         FfmpegFeatureIds.Module,
         StorageFeatureIds.Module,
         TenantHostedServiceFeatureIds.Loader,
+        VideoStreamConfigurationFeatureIds.Module,
         "OrchardCore.Lists",
         "OrchardCore.Title",
     }

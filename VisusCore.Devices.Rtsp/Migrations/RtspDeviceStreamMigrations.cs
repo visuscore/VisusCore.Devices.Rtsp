@@ -1,6 +1,7 @@
 using OrchardCore.ContentManagement.Metadata;
 using OrchardCore.Data.Migration;
 using OrchardCore.Title.Models;
+using VisusCore.Configuration.VideoStream.Core.Models;
 using VisusCore.Devices.Rtsp.Constants;
 using VisusCore.Devices.Rtsp.Models;
 using VisusCore.Storage.Models;
@@ -18,7 +19,13 @@ public class RtspDeviceStreamMigrations : DataMigration
     {
         _contentDefinitionManager.AlterTypeDefinition(ContentTypeNames.RtspDeviceStream, typeBuilder => typeBuilder
             .DisplayedAs("RTSP Device Stream")
-            .WithPart(nameof(TitlePart))
+            .WithPart(nameof(TitlePart), part => part
+                .WithSettings(new TitlePartSettings
+                {
+                    Pattern = "{{ ContentItem.Content.StreamEntityPart.Name }}",
+                    Options = TitlePartOptions.GeneratedHidden,
+                }))
+            .WithPart(nameof(StreamEntityPart))
             .WithPart(nameof(RtspDeviceStreamPart))
             .WithPart(nameof(StreamStorageProviderPart))
             .WithPart(nameof(StreamStorageModePart))

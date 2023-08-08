@@ -10,6 +10,7 @@ using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Threading;
 using System.Threading.Tasks;
+using VisusCore.Configuration.VideoStream.Core.Models;
 using VisusCore.Consumer.Abstractions.Services;
 using VisusCore.Devices.Core.Models;
 using VisusCore.Devices.Rtsp.Abstractions.Services;
@@ -205,27 +206,39 @@ public sealed class RtspConnectionManager : TenantBackgroundScopedService, IRtsp
                 && index.ListContentItemId == deviceId)
             .ListAsync())
             .ToList();
-
-        return (await _session.QueryIndex<RtspDeviceStreamPartIndex>()
+        var streamEntities = (await _session.QueryIndex<StreamEntityPartIndex>()
             .Where(index =>
                 index.Latest
                 && index.Published
                 && index.ContentItemId.IsIn(streamItems.Select(streamItem => streamItem.ContentItemId)))
             .ListAsync())
+            .ToList();
+
+        return (await _session.QueryIndex<RtspDeviceStreamPartIndex>()
+            .Where(index =>
+                index.Latest
+                && index.Published
+                && index.ContentItemId.IsIn(streamEntities.Select(streamItem => streamItem.ContentItemId)))
+            .ListAsync())
             // We need this ToList() call to avoid parallel query execution on the same connection.
 #pragma warning disable S2971 // "IEnumerable" LINQs should be simplified
             .ToList()
 #pragma warning restore S2971 // "IEnumerable" LINQs should be simplified
-            .Select(streamPart => new RtspDeviceStream
-            {
-                Id = streamPart.ContentItemId,
-                Enabled = streamPart.Enabled,
-                AllowAudio = streamPart.AllowAudio,
-                Path = streamPart.Path,
-                Port = streamPart.Port,
-                PreferTcp = streamPart.PreferTcp,
-                Type = streamPart.Type,
-            })
+            .Join(
+                streamEntities,
+                rtspStream => rtspStream.ContentItemId,
+                streamEntities => streamEntities.ContentItemId,
+                (rtspStream, streamEntity) => new RtspDeviceStream
+                {
+                    Id = rtspStream.ContentItemId,
+                    Enabled = streamEntity.Enabled,
+                    AllowAudio = rtspStream.AllowAudio,
+                    Path = rtspStream.Path,
+                    Port = rtspStream.Port,
+                    PreferTcp = rtspStream.PreferTcp,
+                    Type = rtspStream.Type,
+                }
+            )
             .ToList();
     }
 

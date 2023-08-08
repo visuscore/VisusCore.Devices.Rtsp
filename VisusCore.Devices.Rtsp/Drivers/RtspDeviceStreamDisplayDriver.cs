@@ -13,7 +13,6 @@ public class RtspDeviceStreamDisplayDriver : ContentPartDisplayDriver<RtspDevice
     public override IDisplayResult Edit(RtspDeviceStreamPart part, BuildPartEditorContext context) =>
         Initialize<RtspDeviceStreamEditViewModel>(GetEditorShapeType(context), viewModel =>
         {
-            viewModel.Enabled = part.Enabled;
             viewModel.Path = part.Path;
             viewModel.Port = part.Port;
             viewModel.PreferTcp = part.PreferTcp;
@@ -29,7 +28,6 @@ public class RtspDeviceStreamDisplayDriver : ContentPartDisplayDriver<RtspDevice
 
         await context.Updater.TryUpdateModelAsync(viewModel, Prefix);
 
-        part.Enabled = viewModel.Enabled;
         part.Path = viewModel.Path;
         part.Port = viewModel.Port;
         part.PreferTcp = viewModel.PreferTcp;

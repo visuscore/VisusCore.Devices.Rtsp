@@ -4,7 +4,6 @@ namespace VisusCore.Devices.Rtsp.Core.Models;
 
 public class RtspDeviceStreamPartIndex : ContentPartIndex
 {
-    public bool Enabled { get; set; }
     public int Port { get; set; }
     public bool PreferTcp { get; set; }
     public string Path { get; set; }

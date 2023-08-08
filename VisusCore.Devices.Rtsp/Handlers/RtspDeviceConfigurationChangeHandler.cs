@@ -4,6 +4,7 @@ using OrchardCore.Lists.Models;
 using System;
 using System.Threading.Tasks;
 using Tingle.EventBus;
+using VisusCore.Configuration.VideoStream.Core.Models;
 using VisusCore.Devices.Models;
 using VisusCore.Devices.Rtsp.Core.Events;
 using VisusCore.Devices.Rtsp.Models;
@@ -32,7 +33,10 @@ public class RtspDeviceConfigurationChangeHandler : ContentHandlerBase
     private async Task PublishEventConditionallyAsync(ContentContextBase context, bool unpublish = false)
     {
         if (!(context.ContentItem.Has<DevicePart>() && context.ContentItem.Has<RtspDevicePart>())
-            && !(context.ContentItem.Has<RtspDeviceStreamPart>() && context.ContentItem.Has<ContainedPart>()))
+            && !(
+                context.ContentItem.Has<RtspDeviceStreamPart>()
+                && context.ContentItem.Has<StreamEntityPart>()
+                && context.ContentItem.Has<ContainedPart>()))
         {
             return;
         }

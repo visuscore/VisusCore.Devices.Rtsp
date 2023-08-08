@@ -22,7 +22,6 @@ public class RtspDeviceStreamPartIndexProvider : ContentPartIndexProvider<RtspDe
             Latest = contentItem.Latest,
             Published = contentItem.Published,
             AllowAudio = part.AllowAudio,
-            Enabled = part.Enabled,
             Path = part.Path,
             Port = part.Port,
             PreferTcp = part.PreferTcp,

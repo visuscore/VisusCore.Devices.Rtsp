@@ -11,7 +11,6 @@ public class RtspDeviceStreamPartIndexMigrations : DataMigration
     {
         SchemaBuilder.CreateMapIndexTable<RtspDeviceStreamPartIndex>(table => table
             .MapContentPartIndex()
-            .Column(model => model.Enabled)
             .Column(model => model.Port)
             .Column(model => model.PreferTcp)
             .Column(model => model.Path, column => column.Nullable().WithLength(1024))
