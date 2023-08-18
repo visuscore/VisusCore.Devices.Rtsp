@@ -27,4 +27,6 @@ public sealed class VideoStreamSegment : IVideoStreamSegment, IVideoStreamSegmen
     long? IVideoStreamSegmentMetadata.TimestampProvided => TimestampProvided;
 
     long IVideoStreamSegmentMetadata.FrameCount => FrameCount;
+
+    long IVideoStreamSegmentMetadata.Size => _data.Length;
 }
