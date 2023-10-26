@@ -3,6 +3,7 @@ using OrchardCore.ContentManagement.Display.ContentDisplay;
 using OrchardCore.ContentManagement.Display.Models;
 using OrchardCore.DisplayManagement.ModelBinding;
 using OrchardCore.DisplayManagement.Views;
+using System;
 using System.Threading.Tasks;
 using VisusCore.Devices.Rtsp.Models;
 using VisusCore.Devices.Rtsp.ViewModels;
@@ -31,6 +32,21 @@ public class RtspDeviceDisplayDriver : ContentPartDisplayDriver<RtspDevicePart>
         IUpdateModel updater,
         UpdatePartEditorContext context)
     {
+        if (part is null)
+        {
+            throw new ArgumentNullException(nameof(part));
+        }
+
+        if (updater is null)
+        {
+            throw new ArgumentNullException(nameof(updater));
+        }
+
+        if (context is null)
+        {
+            throw new ArgumentNullException(nameof(context));
+        }
+
         var viewModel = new RtspDeviceEditViewModel();
         var previousPassword = part.Password;
 

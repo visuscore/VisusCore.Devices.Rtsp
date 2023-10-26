@@ -13,8 +13,19 @@ public class RtspDevicePartIndexProvider : ContentPartIndexProvider<RtspDevicePa
     {
     }
 
-    protected override RtspDevicePartIndex CreateIndex(RtspDevicePart part, ContentItem contentItem) =>
-        new()
+    protected override RtspDevicePartIndex CreateIndex(RtspDevicePart part, ContentItem contentItem)
+    {
+        if (part is null)
+        {
+            throw new ArgumentNullException(nameof(part));
+        }
+
+        if (contentItem is null)
+        {
+            throw new ArgumentNullException(nameof(contentItem));
+        }
+
+        return new()
         {
             ContentItemId = contentItem.ContentItemId,
             ContentItemVersionId = contentItem.ContentItemVersionId,
@@ -27,4 +38,5 @@ public class RtspDevicePartIndexProvider : ContentPartIndexProvider<RtspDevicePa
             Password = part.Password,
             ConnectionTimeout = part.ConnectionTimeout,
         };
+    }
 }

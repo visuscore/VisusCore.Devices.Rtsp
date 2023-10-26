@@ -13,8 +13,19 @@ public class RtspDeviceStreamPartIndexProvider : ContentPartIndexProvider<RtspDe
     {
     }
 
-    protected override RtspDeviceStreamPartIndex CreateIndex(RtspDeviceStreamPart part, ContentItem contentItem) =>
-        new()
+    protected override RtspDeviceStreamPartIndex CreateIndex(RtspDeviceStreamPart part, ContentItem contentItem)
+    {
+        if (part is null)
+        {
+            throw new ArgumentNullException(nameof(part));
+        }
+
+        if (contentItem is null)
+        {
+            throw new ArgumentNullException(nameof(contentItem));
+        }
+
+        return new()
         {
             ContentItemId = contentItem.ContentItemId,
             ContentItemVersionId = contentItem.ContentItemVersionId,
@@ -27,4 +38,5 @@ public class RtspDeviceStreamPartIndexProvider : ContentPartIndexProvider<RtspDe
             PreferTcp = part.PreferTcp,
             Type = part.Type,
         };
+    }
 }
